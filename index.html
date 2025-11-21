@@ -2,11 +2,11 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8">
-  <title>RefConnect – Quiz & Veldinspectie</title>
+  <title>RefConnect – Quiz & Veldinspectie (Mobile Fix)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
   <style>
-    /* ===================== THEMA TOKENS ===================== */
+    /* ===== THEME TOKENS ===== */
     :root{
       --bg:#f7fafc; --panel:#ffffff; --card:#ffffff; --text:#0f172a; --muted:#64748b;
       --border:#e2e8f0; --accent:#2563eb; --accent-2:#22c55e; --accent-soft:#eff6ff;
@@ -20,54 +20,68 @@
       --shadow:0 10px 30px rgba(0,0,0,.35); --overlay:rgba(0,0,0,.55);
     }
 
-    /* ===================== BASE (no width jumps) ===================== */
-    html{ scrollbar-gutter: stable both-edges; }
-    body{ overflow-y: scroll; } /* altijd scroll-gutter */
-    *{ box-sizing:border-box; -webkit-text-size-adjust:100%; text-size-adjust:100%; }
-
+    /* ===== BASE (iPhone fix: geen horizontale shift) ===== */
+    *{ box-sizing:border-box; -webkit-text-size-adjust:100%; text-size-adjust:100% }
     html,body{
       margin:0; padding:0; background:var(--bg); color:var(--text);
       font-family:-apple-system,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
       font-size:16px; line-height:1.35;
       -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      width:100%; overflow-x:hidden;  /* <<< belangrijk */
+    }
+    @media (min-width:768px){
+      html{ scrollbar-gutter:stable both-edges; } /* alleen desktop */
+      body{ overflow-y:scroll; }
     }
     a{ color:inherit; text-decoration:none }
     img,svg,video{ max-width:100% }
     .muted{ color:var(--muted) }
 
-    /* ===================== HEADER ===================== */
+    /* ===== HEADER ===== */
     .header{
-      position:sticky; top:0; z-index:80; background:var(--panel); border-bottom:1px solid var(--border);
+      position:sticky; top:0; z-index:80; background:var(--panel);
+      border-bottom:1px solid var(--border);
       box-shadow:0 6px 22px rgba(37,99,235,.08);
     }
-    .header-row{ max-width:980px; margin:0 auto; padding:10px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px }
+    .header-row{ max-width:980px; width:100%; margin:0 auto; padding:10px 12px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px }
     .brand{ display:flex; align-items:center; gap:10px }
-    .badge{ width:42px; height:42px; border-radius:12px; color:#fff; font-weight:900; display:grid; place-items:center; background:radial-gradient(circle at 30% 30%, #60a5fa, var(--accent)); box-shadow:0 12px 28px rgba(37,99,235,.28) }
+    .badge{ width:42px; height:42px; border-radius:12px; color:#fff; font-weight:900;
+      display:grid; place-items:center; background:radial-gradient(circle at 30% 30%,#60a5fa,var(--accent));
+      box-shadow:0 12px 28px rgba(37,99,235,.28) }
     .btitle{ font-weight:900; letter-spacing:.2px }
     .bsub{ font-size:.82em; color:var(--muted) }
     .h-actions{ display:flex; align-items:center; gap:8px }
-    .btn,.pill{ appearance:none; border:1px solid var(--border); background:var(--panel); color:var(--text); padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer; box-shadow:var(--shadow) }
+    .btn,.pill{ appearance:none; border:1px solid var(--border); background:var(--panel); color:var(--text);
+      padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer; box-shadow:var(--shadow) }
     .pill.primary{ background:var(--accent); border-color:var(--accent); color:#fff }
     .btn:active,.pill:active{ transform:translateY(1px) }
     .theme{ display:flex; gap:8px; border:1px solid var(--border); border-radius:12px; padding:8px 10px; background:var(--panel) }
     .theme button{ border:0; background:transparent; color:var(--text); font-weight:900; cursor:pointer; padding:6px 8px; border-radius:10px }
     .theme button.active{ background:var(--accent-soft) }
-    .hamburger{ display:flex; align-items:center; gap:8px; border:0; cursor:pointer; background:var(--accent); color:#fff; padding:10px 12px; border-radius:12px; box-shadow:0 10px 24px rgba(37,99,235,.25) }
+    .hamburger{ display:flex; align-items:center; gap:8px; border:0; cursor:pointer; background:var(--accent);
+      color:#fff; padding:10px 12px; border-radius:12px; box-shadow:0 10px 24px rgba(37,99,235,.25) }
     .burger-ico{ width:20px; height:2px; background:#fff; position:relative; display:inline-block }
     .burger-ico::before,.burger-ico::after{ content:""; position:absolute; left:0; right:0; height:2px; background:#fff }
     .burger-ico::before{ top:-6px } .burger-ico::after{ top:6px }
 
-    /* ===================== DRAWER ===================== */
-    .drawer{ position:fixed; inset:0 0 0 auto; width:92vw; max-width:360px; transform:translateX(100%); background:var(--panel); border-left:1px solid var(--border); z-index:120; display:flex; flex-direction:column; transition:transform .22s ease; box-shadow:-10px 0 30px rgba(2,6,23,.15) }
-    .drawer.open{ transform:translateX(0) }
+    /* ===== DRAWER (geen layout-breedte als hij dicht is) ===== */
+    .drawer{ position:fixed; top:0; right:0; bottom:0; width:92vw; max-width:360px;
+      background:var(--panel); border-left:1px solid var(--border); z-index:120;
+      transform:translateX(100%); transition:transform .22s ease;
+      box-shadow:-10px 0 30px rgba(2,6,23,.15);
+      pointer-events:none; /* inert als dicht */
+      contain:paint;  /* voorkomt scroll-breedte */
+    }
+    .drawer.open{ transform:translateX(0); pointer-events:auto }
     .backdrop{ position:fixed; inset:0; background:var(--overlay); z-index:110; display:none }
     .backdrop.show{ display:block }
     .drawer-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px; border-bottom:1px solid var(--border) }
     .drawer-body{ padding:12px; display:grid; gap:10px; overflow:auto }
     .nav-link{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--card); cursor:pointer; box-shadow:var(--shadow) }
 
-    /* ===================== LAYOUT ===================== */
-    .container{ width:min(980px,100%); margin:0 auto; padding:12px }
+    /* ===== LAYOUT ===== */
+    .container{ max-width:980px; width:100%; margin:0 auto; padding:12px }
     .grid{ display:grid; gap:12px }
     @media(min-width:980px){ .grid-2{ grid-template-columns:1.2fr .9fr } }
 
@@ -79,32 +93,26 @@
     .chips{ display:flex; gap:8px; overflow:auto; padding-bottom:4px }
     .chip{ padding:8px 12px; border-radius:999px; border:1px solid var(--border); background:var(--panel); cursor:pointer; white-space:nowrap }
     .chip.active{ background:var(--accent-soft); border-color:color-mix(in sRGB,var(--accent) 40%, var(--border)) }
-    /* iOS: voorkom auto-zoom op inputs */
-    .input,.select,.textarea,button{ font-size:16px }
+    .input,.select,.textarea,button{ font-size:16px } /* iOS: geen auto-zoom */
 
-    /* ===================== QUIZ (NO-SHIFT) ===================== */
+    /* ===== QUIZ (no-shift) ===== */
     .topline{ display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--muted) }
     .progressbar{ width:100%; height:10px; background:#f1f5f9; border:1px solid var(--border); border-radius:999px; overflow:hidden }
     .progressfill{ height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent-2)); transition:width .25s }
 
-    /* Vraagtekst: max 3 regels, geen verspringen */
     .q-text{ font-size:1.12em; font-weight:900; margin:10px 0; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden }
-
     .options{ display:grid; gap:10px }
     .option{
       display:flex; align-items:flex-start; gap:10px; padding:12px; border-radius:12px;
       border:1.5px solid #e5e7eb; background:var(--panel); cursor:pointer; box-shadow:0 2px 0 rgba(15,23,42,.04);
-      min-height:56px; /* vaste hoogte → geen jump */
+      min-height:56px;
     }
     .opt-bullet{ width:26px; height:26px; border-radius:50%; border:2px solid #cbd5e1; display:grid; place-items:center; font-weight:900; color:#94a3b8; background:#f8fafc; flex:0 0 26px }
-    /* Optietekst: max 2 regels, ellipsis */
     .opt-text{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
-
     .option.selected{ border-color:#93c5fd; background:color-mix(in sRGB,var(--accent-soft) 60%, var(--panel)) }
     .option.correct{ border-color:#86efac; background:color-mix(in sRGB,#f0fdf4 70%, var(--panel)) }
     .option.wrong{ border-color:#fecaca; background:color-mix(in sRGB,#fff1f2 70%, var(--panel)) }
 
-    /* Resultaatbalk met vaste ruimte (no shift) */
     .result-bar{
       margin-top:10px; border:1px solid var(--border); border-radius:12px; padding:10px; background:var(--panel);
       min-height:54px; display:flex; align-items:center; justify-content:space-between; gap:8px;
@@ -122,20 +130,19 @@
     }
     .grow{ flex:1 }
 
-    /* ===================== VELDINSPECTIE ===================== */
+    /* ===== FIELD CHECK ===== */
     .section{ margin-top:10px; border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--panel) }
     .section-head{ background:color-mix(in sRGB, var(--panel) 75%, #f8fafc); padding:10px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; border-bottom:1px solid var(--border); font-weight:800 }
     .section-body{ padding:10px; display:grid; gap:8px }
     .qrow{ display:flex; justify-content:space-between; gap:10px; align-items:center; border:1px solid #e5e7eb; border-radius:12px; padding:10px; background:var(--card) }
     .status-box{ border-radius:12px; padding:12px; margin-top:10px; display:flex; gap:12px; align-items:center; border:2px solid #fee2e2; background:#fff1f2 }
 
-    /* ===================== MODALS ===================== */
+    /* ===== MODALS ===== */
     .modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:var(--overlay); z-index:150 }
     .modal.open{ display:flex }
-    .modal-card{ width:min(720px,94vw); background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:12px; box-shadow:var(--shadow) }
+    .modal-card{ width:min(720px,94%); background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:12px; box-shadow:var(--shadow) }
     .modal-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:8px }
 
-    /* Error bar */
     .err{ position:fixed; left:0; right:0; bottom:0; background:#b91c1c; color:#fff; padding:10px; border-top:3px solid #fecaca; z-index:200; display:none; white-space:pre-wrap }
 
     @media (max-width:380px){
@@ -167,7 +174,7 @@
   </header>
 
   <!-- DRAWER -->
-  <div id="backdrop" class="backdrop"></div>
+  <div id="backdrop" class="backdrop" aria-hidden="true"></div>
   <aside id="drawer" class="drawer" aria-hidden="true">
     <div class="drawer-head">
       <strong>Snelle navigatie</strong>
@@ -196,7 +203,6 @@
         <div id="qText" class="q-text">—</div>
         <div id="optList" class="options"></div>
 
-        <!-- Resultaatbalk (vaste ruimte, geen verschuiving) -->
         <div id="resultBar" class="result-bar" aria-live="polite">
           <div class="result-left">
             <div id="resultTitle" class="result-title"></div>
@@ -312,9 +318,8 @@
     </div>
   </div>
 
-  <!-- SCRIPT -->
   <script>
-    /* ---------- THEME ---------- */
+    /* THEME */
     (function(){
       const body=document.body, lightBtn=document.getElementById('lightBtn'), darkBtn=document.getElementById('darkBtn');
       function apply(t){
@@ -328,7 +333,7 @@
       lightBtn.addEventListener('click',()=>apply('light')); darkBtn.addEventListener('click',()=>apply('dark'));
     })();
 
-    /* ---------- DRAWER / ROUTER ---------- */
+    /* DRAWER / ROUTER */
     (function(){
       const drawer=document.getElementById('drawer'), backdrop=document.getElementById('backdrop'), menuBtn=document.getElementById('menuBtn'), closeBtn=document.getElementById('drawerClose');
       const navQuiz=document.getElementById('navQuiz'), navField=document.getElementById('navField');
@@ -341,21 +346,19 @@
       openRoute('quiz');
     })();
 
-    /* ---------- ERROR BAR ---------- */
+    /* ERROR BAR */
     const errBox=document.getElementById('err');
     function showErr(msg){ errBox.textContent='Fout: '+msg; errBox.style.display='block'; setTimeout(()=>{ errBox.style.display='none'; },4000); }
     window.addEventListener('error',e=>showErr(e.message||String(e)));
     window.addEventListener('unhandledrejection',e=>showErr((e.reason&&e.reason.message)?e.reason.message:String(e.reason)));
 
-    /* ---------- QUIZ ---------- */
+    /* QUIZ */
     (function(){
-      // Demo; laad je 300 via "Importeer JSON" of "Plak JSON".
       const SAMPLE=[
-        {"id":"s1","text":"Mag je bij een aftrap de bal achteruit spelen?","options":["Nee, alleen naar voren.","Ja, in elke richting.","Alleen als de scheidsrechter het zegt.","Alleen in het jeugdvoetbal."],"correctIndex":1,"explanation":"Bij een aftrap mag de bal in elke richting. De bal is in het spel zodra hij is getrapt en duidelijk beweegt.","source":"Regel 8 – Aftrap","tags":["aftrap","start spel"]},
-        {"id":"s2","text":"Mag je direct scoren uit een inworp?","options":["Nee, nooit.","Ja, altijd.","Alleen in eigen doel.","Alleen bij senioren."],"correctIndex":0,"explanation":"Niet direct uit inworp; de bal moet eerst iemand raken.","source":"Regel 15 – Inworp","tags":["inworp","hervatting"]}
+        {"id":"s1","text":"Mag je bij een aftrap de bal achteruit spelen?","options":["Nee, alleen naar voren.","Ja, in elke richting.","Alleen als de scheidsrechter het zegt.","Alleen in het jeugdvoetbal."],"correctIndex":1,"explanation":"Bij een aftrap mag de bal in elke richting.","source":"Regel 8 – Aftrap","tags":["aftrap","start spel"]}
       ];
 
-      const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+      const $=(s,r=document)=>r.querySelector(s);
       const esc=s=>String(s).replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]||m));
       const shuffle=a=>{ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } };
 
@@ -370,7 +373,6 @@
         chipBox:$('#chipBox'), search:$('#search'), order:$('#order'), statLine:$('#statLine')
       };
 
-      // Explain modal
       const explainModal=$('#explainModal'), expBody=$('#expBody'), btnCloseExplain=$('#btnCloseExplain');
       btnCloseExplain.addEventListener('click',()=>explainModal.classList.remove('open'));
 
@@ -408,7 +410,7 @@
 
       function buildView(){
         VIEW=ALL.filter(q=>{
-          const tagOk=!activeTag||(q.tags||[]).map(t=>t.toLowerCase()).includes(activeTag.toLowerCase());
+          const tagOk=!activeTag||(q.tags||[]).map(t=>t.toLowerCase()).includes(activeTag?.toLowerCase());
           const termOk=!searchTerm||q.text.toLowerCase().includes(searchTerm)||q.options.some(o=>o.toLowerCase().includes(searchTerm));
           return tagOk && termOk;
         });
@@ -457,7 +459,7 @@
         saveScore(1,ok?1:0);
 
         el.resultTitle.textContent= ok ? 'Goed! ✅' : 'Fout ❌';
-        el.resultDetail.textContent= `Juiste antwoord: ${LETTERS[q.correctIndex]}. ${q.options[q.correctIndex]}`;
+        el.resultDetail.textContent= `Juiste antwoord: ${['A','B','C','D'][q.correctIndex]}. ${q.options[q.correctIndex]}`;
         el.resultBar.classList.add('show');
 
         if(q.explanation || q.source){
@@ -472,9 +474,7 @@
         el.btnPracticeWrong.disabled = WRONG.length===0;
       });
 
-      el.btnNext.addEventListener('click',()=>{ if(!checked) return; if(idx+1<VIEW.length){ idx++; selected=NULL; checked=false; renderQuestion(); renderStats(); } });
-      // fix: NULL -> null
-      const NULL=null;
+      el.btnNext.addEventListener('click',()=>{ if(!checked) return; if(idx+1<VIEW.length){ idx++; selected=null; checked=false; renderQuestion(); renderStats(); } });
 
       el.btnPracticeWrong.addEventListener('click',()=>{
         const set=new Set(WRONG); VIEW=ALL.filter(q=>set.has(q.id));
@@ -511,7 +511,7 @@
       setQuestions(SAMPLE,'Voorbeeldvragen geladen');
     })();
 
-    /* ---------- VELDINSPECTIE ---------- */
+    /* VELDINSPECTIE */
     (function(){
       const t={nl:{"intro-tag":"Veldcontrole","intro-title":"Controleer het veld voor je fluit","intro-text":"Loop alle onderdelen na. Alles op groen? Dan is het veld (waarschijnlijk) bespeelbaar.","result-tag":"Resultaat","result-title":"Speelbaarheid","rules-title":"Tips voor scheidsrechters","tip-1":"Veiligheid gaat vóór afmaken van de wedstrijd.","tip-2":"Als het tijdens de 2e helft slechter wordt, mag je staken.","tip-3":"Noteer minuut, stand en reden.","sec-weather":"1. Weer & zicht","sec-pitch":"2. Veld / ondergrond","sec-goals":"3. Doelen & materiaal","sec-lines":"4. Lijnen & markering","sec-safety":"5. Veiligheid & omgeving","sec-extra":"6. Overig","q-rain":"Hevige regen / plassen op het veld?","q-storm":"Onweer / bliksem in de buurt?","q-visibility":"Zicht is voldoende?","q-surface":"Ondergrond niet té drassig / bevroren?","q-ballroll":"Bal kan normaal rollen/stuiten?","q-holes":"Geen gaten / gevaarlijke plekken?","q-goal-fixed":"Doelen staan vast (niet omvallend)?","q-nets":"Netten in orde?","q-corners":"Cornervlaggen aanwezig?","q-lines":"Lijnen volledig zichtbaar?","q-bench":"Technische zone / dug-out veilig?","q-crowd":"Publiek niet te dicht op veld?","q-refroom":"Kleedruimte scheidsrechter beschikbaar?","playable":"Veld speelbaar ✅","not-playable":"Veld niet speelbaar ❌","borderline":"Twijfelgeval – overleg met officials/consul"},
       en:{"intro-tag":"Field check","intro-title":"Inspect the pitch before you whistle","intro-text":"Go through each section. All green? Then the pitch is (most likely) playable.","result-tag":"Result","result-title":"Playability","rules-title":"Referee tips","tip-1":"Safety comes before finishing the match.","tip-2":"If conditions worsen, you may abandon.","tip-3":"Note minute, score and reason.","sec-weather":"1. Weather & visibility","sec-pitch":"2. Pitch / surface","sec-goals":"3. Goals & equipment","sec-lines":"4. Lines & markings","sec-safety":"5. Safety & surroundings","sec-extra":"6. Other","q-rain":"Heavy rain / standing water?","q-storm":"Thunder / lightning nearby?","q-visibility":"Visibility OK?","q-surface":"Surface not too muddy / frozen?","q-ballroll":"Ball can roll / bounce normally?","q-holes":"No holes / dangerous spots?","q-goal-fixed":"Goals are fixed / secured?","q-nets":"Nets OK?","q-corners":"Corner flags present?","q-lines":"Field lines clearly visible?","q-bench":"Technical area / dugout safe?","q-crowd":"Spectators not too close?","q-refroom":"Referee dressing room available?","playable":"Pitch playable ✅","not-playable":"Pitch NOT playable ❌","borderline":"Borderline – consult officials/consul"}};
