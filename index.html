@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <title>RefConnect – Quiz & Veldinspectie</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <style>
+    /* ===================== THEMA TOKENS ===================== */
+    :root{
+      --bg:#f7fafc; --panel:#ffffff; --card:#ffffff; --text:#0f172a; --muted:#64748b;
+      --border:#e2e8f0; --accent:#2563eb; --accent-2:#22c55e; --accent-soft:#eff6ff;
+      --ok:#16a34a; --warn:#f59e0b; --danger:#ef4444;
+      --radius:16px; --shadow:0 8px 26px rgba(2,6,23,.06); --overlay:rgba(2,6,23,.45);
+    }
+    body.theme-dark{
+      --bg:#0b1220; --panel:#0f172a; --card:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
+      --border:#1f2937; --accent:#60a5fa; --accent-2:#34d399; --accent-soft:#0b1220;
+      --ok:#22c55e; --warn:#fbbf24; --danger:#f87171;
+      --shadow:0 10px 30px rgba(0,0,0,.35); --overlay:rgba(0,0,0,.55);
+    }
+
+    /* ===================== BASE (no width jumps) ===================== */
+    html{ scrollbar-gutter: stable both-edges; }
+    body{ overflow-y: scroll; } /* altijd scroll-gutter */
+    *{ box-sizing:border-box; -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+
+    html,body{
+      margin:0; padding:0; background:var(--bg); color:var(--text);
+      font-family:-apple-system,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      font-size:16px; line-height:1.35;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    a{ color:inherit; text-decoration:none }
+    img,svg,video{ max-width:100% }
+    .muted{ color:var(--muted) }
+
+    /* ===================== HEADER ===================== */
+    .header{
+      position:sticky; top:0; z-index:80; background:var(--panel); border-bottom:1px solid var(--border);
+      box-shadow:0 6px 22px rgba(37,99,235,.08);
+    }
+    .header-row{ max-width:980px; margin:0 auto; padding:10px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px }
+    .brand{ display:flex; align-items:center; gap:10px }
+    .badge{ width:42px; height:42px; border-radius:12px; color:#fff; font-weight:900; display:grid; place-items:center; background:radial-gradient(circle at 30% 30%, #60a5fa, var(--accent)); box-shadow:0 12px 28px rgba(37,99,235,.28) }
+    .btitle{ font-weight:900; letter-spacing:.2px }
+    .bsub{ font-size:.82em; color:var(--muted) }
+    .h-actions{ display:flex; align-items:center; gap:8px }
+    .btn,.pill{ appearance:none; border:1px solid var(--border); background:var(--panel); color:var(--text); padding:10px 12px; border-radius:12px; font-weight:800; cursor:pointer; box-shadow:var(--shadow) }
+    .pill.primary{ background:var(--accent); border-color:var(--accent); color:#fff }
+    .btn:active,.pill:active{ transform:translateY(1px) }
+    .theme{ display:flex; gap:8px; border:1px solid var(--border); border-radius:12px; padding:8px 10px; background:var(--panel) }
+    .theme button{ border:0; background:transparent; color:var(--text); font-weight:900; cursor:pointer; padding:6px 8px; border-radius:10px }
+    .theme button.active{ background:var(--accent-soft) }
+    .hamburger{ display:flex; align-items:center; gap:8px; border:0; cursor:pointer; background:var(--accent); color:#fff; padding:10px 12px; border-radius:12px; box-shadow:0 10px 24px rgba(37,99,235,.25) }
+    .burger-ico{ width:20px; height:2px; background:#fff; position:relative; display:inline-block }
+    .burger-ico::before,.burger-ico::after{ content:""; position:absolute; left:0; right:0; height:2px; background:#fff }
+    .burger-ico::before{ top:-6px } .burger-ico::after{ top:6px }
+
+    /* ===================== DRAWER ===================== */
+    .drawer{ position:fixed; inset:0 0 0 auto; width:92vw; max-width:360px; transform:translateX(100%); background:var(--panel); border-left:1px solid var(--border); z-index:120; display:flex; flex-direction:column; transition:transform .22s ease; box-shadow:-10px 0 30px rgba(2,6,23,.15) }
+    .drawer.open{ transform:translateX(0) }
+    .backdrop{ position:fixed; inset:0; background:var(--overlay); z-index:110; display:none }
+    .backdrop.show{ display:block }
+    .drawer-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px; border-bottom:1px solid var(--border) }
+    .drawer-body{ padding:12px; display:grid; gap:10px; overflow:auto }
+    .nav-link{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--card); cursor:pointer; box-shadow:var(--shadow) }
+
+    /* ===================== LAYOUT ===================== */
+    .container{ width:min(980px,100%); margin:0 auto; padding:12px }
+    .grid{ display:grid; gap:12px }
+    @media(min-width:980px){ .grid-2{ grid-template-columns:1.2fr .9fr } }
+
+    .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:12px; box-shadow:var(--shadow) }
+    .h2{ margin:0 0 6px; font-size:1.15em; font-weight:900 }
+    input[type=file]{ display:none }
+    .input,.select,.textarea{ width:100%; background:var(--panel); border:1px solid var(--border); color:var(--text); border-radius:12px; padding:10px }
+    .toolbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
+    .chips{ display:flex; gap:8px; overflow:auto; padding-bottom:4px }
+    .chip{ padding:8px 12px; border-radius:999px; border:1px solid var(--border); background:var(--panel); cursor:pointer; white-space:nowrap }
+    .chip.active{ background:var(--accent-soft); border-color:color-mix(in sRGB,var(--accent) 40%, var(--border)) }
+    /* iOS: voorkom auto-zoom op inputs */
+    .input,.select,.textarea,button{ font-size:16px }
+
+    /* ===================== QUIZ (NO-SHIFT) ===================== */
+    .topline{ display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--muted) }
+    .progressbar{ width:100%; height:10px; background:#f1f5f9; border:1px solid var(--border); border-radius:999px; overflow:hidden }
+    .progressfill{ height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent-2)); transition:width .25s }
+
+    /* Vraagtekst: max 3 regels, geen verspringen */
+    .q-text{ font-size:1.12em; font-weight:900; margin:10px 0; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden }
+
+    .options{ display:grid; gap:10px }
+    .option{
+      display:flex; align-items:flex-start; gap:10px; padding:12px; border-radius:12px;
+      border:1.5px solid #e5e7eb; background:var(--panel); cursor:pointer; box-shadow:0 2px 0 rgba(15,23,42,.04);
+      min-height:56px; /* vaste hoogte → geen jump */
+    }
+    .opt-bullet{ width:26px; height:26px; border-radius:50%; border:2px solid #cbd5e1; display:grid; place-items:center; font-weight:900; color:#94a3b8; background:#f8fafc; flex:0 0 26px }
+    /* Optietekst: max 2 regels, ellipsis */
+    .opt-text{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
+
+    .option.selected{ border-color:#93c5fd; background:color-mix(in sRGB,var(--accent-soft) 60%, var(--panel)) }
+    .option.correct{ border-color:#86efac; background:color-mix(in sRGB,#f0fdf4 70%, var(--panel)) }
+    .option.wrong{ border-color:#fecaca; background:color-mix(in sRGB,#fff1f2 70%, var(--panel)) }
+
+    /* Resultaatbalk met vaste ruimte (no shift) */
+    .result-bar{
+      margin-top:10px; border:1px solid var(--border); border-radius:12px; padding:10px; background:var(--panel);
+      min-height:54px; display:flex; align-items:center; justify-content:space-between; gap:8px;
+      visibility:hidden; opacity:0; transition:opacity .15s;
+    }
+    .result-bar.show{ visibility:visible; opacity:1 }
+    .result-left{ display:flex; flex-direction:column; gap:4px }
+    .result-title{ font-weight:900 }
+    .result-detail{ font-size:.92em }
+
+    .sticky-actions{
+      position:sticky; bottom:8px; margin-top:10px;
+      background:color-mix(in sRGB, var(--panel) 85%, transparent); backdrop-filter:blur(6px);
+      border:1px solid var(--border); border-radius:12px; padding:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    }
+    .grow{ flex:1 }
+
+    /* ===================== VELDINSPECTIE ===================== */
+    .section{ margin-top:10px; border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--panel) }
+    .section-head{ background:color-mix(in sRGB, var(--panel) 75%, #f8fafc); padding:10px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; border-bottom:1px solid var(--border); font-weight:800 }
+    .section-body{ padding:10px; display:grid; gap:8px }
+    .qrow{ display:flex; justify-content:space-between; gap:10px; align-items:center; border:1px solid #e5e7eb; border-radius:12px; padding:10px; background:var(--card) }
+    .status-box{ border-radius:12px; padding:12px; margin-top:10px; display:flex; gap:12px; align-items:center; border:2px solid #fee2e2; background:#fff1f2 }
+
+    /* ===================== MODALS ===================== */
+    .modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:var(--overlay); z-index:150 }
+    .modal.open{ display:flex }
+    .modal-card{ width:min(720px,94vw); background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:12px; box-shadow:var(--shadow) }
+    .modal-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:8px }
+
+    /* Error bar */
+    .err{ position:fixed; left:0; right:0; bottom:0; background:#b91c1c; color:#fff; padding:10px; border-top:3px solid #fecaca; z-index:200; display:none; white-space:pre-wrap }
+
+    @media (max-width:380px){
+      .badge{ width:38px; height:38px }
+      .hamburger{ padding:8px 10px }
+      .btn,.pill{ padding:9px 10px }
+      .opt-bullet{ width:24px; height:24px }
+    }
+  </style>
+</head>
+<body>
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-row">
+      <div class="brand">
+        <div class="badge">RC</div>
+        <div><div class="btitle">RefConnect</div><div class="bsub">Quiz • Veldinspectie</div></div>
+      </div>
+      <div class="h-actions">
+        <div class="theme" role="group" aria-label="Thema">
+          <button id="lightBtn" aria-pressed="false">☀️</button>
+          <button id="darkBtn"  aria-pressed="false">🌙</button>
+        </div>
+        <button id="menuBtn" class="hamburger" aria-label="Menu">
+          <span class="burger-ico"></span><span>Menu</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- DRAWER -->
+  <div id="backdrop" class="backdrop"></div>
+  <aside id="drawer" class="drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <strong>Snelle navigatie</strong>
+      <button id="drawerClose" class="pill">Sluit</button>
+    </div>
+    <div class="drawer-body">
+      <div id="navQuiz"  class="nav-link"><div>📘 Quiz</div><small class="muted">Oefen KNVB/IFAB</small></div>
+      <div id="navField" class="nav-link"><div>🧪 Veldinspectie</div><small class="muted">Check bespeelbaarheid</small></div>
+    </div>
+  </aside>
+
+  <!-- ERROR BAR -->
+  <div id="err" class="err"></div>
+
+  <!-- MAIN -->
+  <main class="container">
+    <!-- QUIZ -->
+    <div id="view-quiz" class="grid">
+      <section class="card">
+        <div class="topline">
+          <div id="progressLabel">Vraag 0/0</div>
+          <div id="tagLabel" class="muted"></div>
+        </div>
+        <div class="progressbar" aria-hidden="true"><div id="progressFill" class="progressfill"></div></div>
+
+        <div id="qText" class="q-text">—</div>
+        <div id="optList" class="options"></div>
+
+        <!-- Resultaatbalk (vaste ruimte, geen verschuiving) -->
+        <div id="resultBar" class="result-bar" aria-live="polite">
+          <div class="result-left">
+            <div id="resultTitle" class="result-title"></div>
+            <div id="resultDetail" class="result-detail muted"></div>
+          </div>
+          <button id="btnExplain" class="btn" style="display:none">Toelichting</button>
+        </div>
+
+        <div class="sticky-actions">
+          <div id="status" class="muted grow">Status: nog geen vragen geladen.</div>
+          <button id="btnPracticeWrong" class="btn" disabled>Fouten oefenen</button>
+          <button id="btnCheck" class="pill primary" disabled>Nakijken</button>
+          <button id="btnNext" class="btn" disabled>Volgende</button>
+        </div>
+      </section>
+
+      <aside class="card">
+        <div class="h2">Dataset</div>
+        <div class="toolbar" style="margin-bottom:6px">
+          <label class="btn" for="fileJSON">📥 Importeer JSON</label>
+          <input id="fileJSON" type="file" accept=".json,application/json">
+          <button id="btnPaste" class="btn">📋 Plak JSON</button>
+          <button id="btnResetScore" class="btn">🔄 Reset score</button>
+        </div>
+
+        <div class="h2">Zoeken</div>
+        <input id="search" class="input" placeholder="Zoek in vraag of opties…">
+
+        <div class="h2" style="margin-top:10px">Filter op tag</div>
+        <div id="chipBox" class="chips"></div>
+
+        <div class="h2" style="margin-top:10px">Volgorde</div>
+        <select id="order" class="select">
+          <option value="random">Willekeurig</option>
+          <option value="az">A–Z op vraag</option>
+        </select>
+
+        <div class="h2" style="margin-top:10px">Overzicht</div>
+        <div class="muted" id="statLine">Vragen: 0 • Score: 0/0</div>
+
+        <div class="h2" style="margin-top:10px">Export</div>
+        <button id="btnExportWrong" class="btn">⬇️ Exporteer fouten</button>
+      </aside>
+    </div>
+
+    <!-- VELDINSPECTIE -->
+    <div id="view-field" class="grid" style="display:none">
+      <section class="card" id="field-form">
+        <div class="bsub" id="f-intro-tag">Veldcontrole</div>
+        <div class="h2" id="f-intro-title">Controleer het veld voor je fluit</div>
+        <p class="muted" id="f-intro-text" style="margin-top:0">
+          Loop alle onderdelen na. Alles op groen? Dan is het veld (waarschijnlijk) bespeelbaar.
+        </p>
+
+        <div class="toolbar" style="margin:8px 0 6px">
+          <button id="langNL" class="btn">NL</button>
+          <button id="langEN" class="btn">EN</button>
+        </div>
+
+        <div class="progressbar"><div id="f-progress-fill" class="progressfill"></div></div>
+        <div class="topline">
+          <span id="f-progress-label">0% voltooid</span>
+          <span id="f-progress-score">Score: 0 / 100</span>
+        </div>
+
+        <div id="sections"></div>
+      </section>
+
+      <section class="card" id="field-result">
+        <div class="bsub" id="f-result-tag">Resultaat</div>
+        <div class="h2" id="f-result-title">Speelbaarheid</div>
+        <div id="status-box" class="status-box">
+          <div>
+            <div id="status-title" class="btitle">Veld niet speelbaar</div>
+            <div id="status-desc" class="muted">Vul alle onderdelen in om een advies te krijgen.</div>
+          </div>
+        </div>
+
+        <div class="section" style="margin-top:10px">
+          <div class="section-head"><span id="f-rules-title">Tips voor scheidsrechters</span><span>▼</span></div>
+          <div class="section-body muted">
+            <ul style="padding-left:1.1rem;margin:0;display:grid;gap:.35rem;">
+              <li id="tip-1">Veiligheid gaat vóór afmaken van de wedstrijd.</li>
+              <li id="tip-2">Als het tijdens de 2e helft slechter wordt, mag je staken.</li>
+              <li id="tip-3">Noteer minuut, stand en reden.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- MODALS -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <div class="h2" id="modalTitle">Plak je JSON</div>
+      <p class="muted" style="margin:6px 0 10px">
+        Formaat: [{"text":"…","options":["A","B","C","D"],"correctIndex":1,"explanation":"…","source":"…","tags":["…"]}, …]
+      </p>
+      <textarea id="pasteArea" class="textarea" rows="10" placeholder='[{"text":"..."}]'></textarea>
+      <div class="modal-actions">
+        <button id="btnLoadPasted" class="pill primary">Laden</button>
+        <button id="btnCloseModal" class="btn">Sluiten</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="explainModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="expTitle">
+    <div class="modal-card">
+      <div class="h2" id="expTitle">Toelichting</div>
+      <div id="expBody" class="muted"></div>
+      <div class="modal-actions"><button id="btnCloseExplain" class="btn">Sluiten</button></div>
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script>
+    /* ---------- THEME ---------- */
+    (function(){
+      const body=document.body, lightBtn=document.getElementById('lightBtn'), darkBtn=document.getElementById('darkBtn');
+      function apply(t){
+        if(t==='dark') body.classList.add('theme-dark'); else body.classList.remove('theme-dark');
+        localStorage.setItem('rc_theme', t);
+        lightBtn.classList.toggle('active', t==='light'); darkBtn.classList.toggle('active', t==='dark');
+        lightBtn.setAttribute('aria-pressed', t==='light'); darkBtn.setAttribute('aria-pressed', t==='dark');
+        const meta=document.querySelector('meta[name="theme-color"]'); if(meta) meta.setAttribute('content', t==='dark'?'#0b1220':'#ffffff');
+      }
+      const saved=localStorage.getItem('rc_theme'); if(saved) apply(saved); else apply(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+      lightBtn.addEventListener('click',()=>apply('light')); darkBtn.addEventListener('click',()=>apply('dark'));
+    })();
+
+    /* ---------- DRAWER / ROUTER ---------- */
+    (function(){
+      const drawer=document.getElementById('drawer'), backdrop=document.getElementById('backdrop'), menuBtn=document.getElementById('menuBtn'), closeBtn=document.getElementById('drawerClose');
+      const navQuiz=document.getElementById('navQuiz'), navField=document.getElementById('navField');
+      const vQuiz=document.getElementById('view-quiz'), vField=document.getElementById('view-field');
+      function openDrawer(){ drawer.classList.add('open'); backdrop.classList.add('show'); }
+      function closeDrawer(){ drawer.classList.remove('open'); backdrop.classList.remove('show'); }
+      function openRoute(n){ if(n==='quiz'){ vQuiz.style.display='grid'; vField.style.display='none'; } else { vQuiz.style.display='none'; vField.style.display='grid'; } closeDrawer(); window.scrollTo({top:0,behavior:'smooth'}); }
+      menuBtn.addEventListener('click',openDrawer); closeBtn.addEventListener('click',closeDrawer); backdrop.addEventListener('click',closeDrawer);
+      navQuiz.addEventListener('click',()=>openRoute('quiz')); navField.addEventListener('click',()=>openRoute('field'));
+      openRoute('quiz');
+    })();
+
+    /* ---------- ERROR BAR ---------- */
+    const errBox=document.getElementById('err');
+    function showErr(msg){ errBox.textContent='Fout: '+msg; errBox.style.display='block'; setTimeout(()=>{ errBox.style.display='none'; },4000); }
+    window.addEventListener('error',e=>showErr(e.message||String(e)));
+    window.addEventListener('unhandledrejection',e=>showErr((e.reason&&e.reason.message)?e.reason.message:String(e.reason)));
+
+    /* ---------- QUIZ ---------- */
+    (function(){
+      // Demo; laad je 300 via "Importeer JSON" of "Plak JSON".
+      const SAMPLE=[
+        {"id":"s1","text":"Mag je bij een aftrap de bal achteruit spelen?","options":["Nee, alleen naar voren.","Ja, in elke richting.","Alleen als de scheidsrechter het zegt.","Alleen in het jeugdvoetbal."],"correctIndex":1,"explanation":"Bij een aftrap mag de bal in elke richting. De bal is in het spel zodra hij is getrapt en duidelijk beweegt.","source":"Regel 8 – Aftrap","tags":["aftrap","start spel"]},
+        {"id":"s2","text":"Mag je direct scoren uit een inworp?","options":["Nee, nooit.","Ja, altijd.","Alleen in eigen doel.","Alleen bij senioren."],"correctIndex":0,"explanation":"Niet direct uit inworp; de bal moet eerst iemand raken.","source":"Regel 15 – Inworp","tags":["inworp","hervatting"]}
+      ];
+
+      const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+      const esc=s=>String(s).replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]||m));
+      const shuffle=a=>{ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } };
+
+      const el={
+        qText:$('#qText'), optList:$('#optList'),
+        resultBar:$('#resultBar'), resultTitle:$('#resultTitle'), resultDetail:$('#resultDetail'), btnExplain:$('#btnExplain'),
+        progressLabel:$('#progressLabel'), progressFill:$('#progressFill'), tagLabel:$('#tagLabel'),
+        status:$('#status'), btnCheck:$('#btnCheck'), btnNext:$('#btnNext'), btnPracticeWrong:$('#btnPracticeWrong'),
+        btnExportWrong:$('#btnExportWrong'), btnResetScore:$('#btnResetScore'),
+        fileJSON:$('#fileJSON'), btnPaste:$('#btnPaste'), modal:$('#modal'),
+        btnLoadPasted:$('#btnLoadPasted'), btnCloseModal:$('#btnCloseModal'), pasteArea:$('#pasteArea'),
+        chipBox:$('#chipBox'), search:$('#search'), order:$('#order'), statLine:$('#statLine')
+      };
+
+      // Explain modal
+      const explainModal=$('#explainModal'), expBody=$('#expBody'), btnCloseExplain=$('#btnCloseExplain');
+      btnCloseExplain.addEventListener('click',()=>explainModal.classList.remove('open'));
+
+      let ALL=[], VIEW=[], WRONG=[], idx=0, selected=null, checked=false, activeTag=null, searchTerm='', orderMode='random';
+      const LETTERS=['A','B','C','D'];
+
+      function loadScore(){ try{ return {a:+(localStorage.getItem('rc_ans')||0), c:+(localStorage.getItem('rc_cor')||0)} }catch(e){ return {a:0,c:0} } }
+      function saveScore(addA=0,addC=0){ try{ const s=loadScore(); localStorage.setItem('rc_ans', String(s.a+addA)); localStorage.setItem('rc_cor', String(s.c+addC)); }catch(e){} }
+
+      function normalize(arr){
+        return (arr||[]).map(q=>{
+          const id=q.id||Math.random().toString().slice(2);
+          const text=(q.text||'').trim();
+          const opts=(q.options||[q.optionA,q.optionB,q.optionC,q.optionD]).filter(x=>x!=null).map(x=>String(x).trim());
+          const ci=Math.max(0,Math.min(3,parseInt(q.correctIndex,10)||0));
+          const explanation=(q.explanation||'').trim();
+          const source=(q.source||'').trim();
+          const tags=Array.isArray(q.tags)?q.tags:(typeof q.tags==='string'?q.tags.split(',').map(s=>s.trim()).filter(Boolean):[]);
+          if(!text || opts.length!==4) return null;
+          return {id,text,options:opts,correctIndex:ci,explanation,source,tags};
+        }).filter(Boolean);
+      }
+
+      function setQuestions(arr,msg){
+        ALL=normalize(arr); WRONG=[]; idx=0; selected=null; checked=false;
+        buildTags(); buildView(); el.status.textContent=`Status: ${msg} (${ALL.length} vragen)`;
+      }
+
+      function buildTags(){
+        const tags=Array.from(new Set(ALL.flatMap(q=>q.tags||[]))).sort((a,b)=>a.localeCompare(b));
+        el.chipBox.innerHTML='';
+        const mk=(label,tag=null)=>{ const b=document.createElement('button'); b.className='chip'+((activeTag===tag)?' active':''); b.textContent=label; b.onclick=()=>{ activeTag=tag; buildView(); buildTags(); }; el.chipBox.appendChild(b); };
+        mk('Alle',null); tags.forEach(t=>mk(t,t));
+      }
+
+      function buildView(){
+        VIEW=ALL.filter(q=>{
+          const tagOk=!activeTag||(q.tags||[]).map(t=>t.toLowerCase()).includes(activeTag.toLowerCase());
+          const termOk=!searchTerm||q.text.toLowerCase().includes(searchTerm)||q.options.some(o=>o.toLowerCase().includes(searchTerm));
+          return tagOk && termOk;
+        });
+        if(orderMode==='az') VIEW.sort((a,b)=>a.text.localeCompare(b.text)); else shuffle(VIEW);
+        idx=0; selected=null; checked=false; WRONG=[];
+        renderStats(); renderQuestion();
+        const fInfo=(activeTag||searchTerm)?` • Gefilterd: ${VIEW.length}`:'';
+        const s=loadScore(); el.statLine.textContent=`Vragen: ${ALL.length}${fInfo} • Score: ${s.c}/${s.a}`;
+        el.btnPracticeWrong.disabled=true;
+        el.resultTitle.textContent=''; el.resultDetail.textContent=''; el.resultBar.classList.remove('show'); el.btnExplain.style.display='none';
+      }
+
+      function renderStats(){
+        el.progressLabel.textContent=`Vraag ${Math.min(idx+1,VIEW.length)}/${VIEW.length||0}`;
+        const pct=VIEW.length?Math.round((idx/VIEW.length)*100):0; el.progressFill.style.width=pct+'%';
+      }
+
+      function renderQuestion(){
+        const q=VIEW[idx];
+        el.qText.textContent=q?q.text:'—';
+        el.tagLabel.textContent=q&&q.tags&&q.tags.length?q.tags.join(' • '):'';
+        el.optList.innerHTML='';
+        el.resultTitle.textContent=''; el.resultDetail.textContent=''; el.resultBar.classList.remove('show'); el.btnExplain.style.display='none';
+
+        if(!q){ el.btnCheck.disabled=true; el.btnNext.disabled=true; return; }
+
+        q.options.forEach((opt,i)=>{
+          const div=document.createElement('div');
+          div.className='option'+(selected===i?' selected':'')+(checked&&i===q.correctIndex?' correct':'')+(checked&&selected===i&&i!==q.correctIndex?' wrong':'');
+          const bullet=document.createElement('div'); bullet.className='opt-bullet'; bullet.textContent=LETTERS[i];
+          const text=document.createElement('div'); text.className='opt-text'; text.textContent=opt;
+          div.appendChild(bullet); div.appendChild(text);
+          div.onclick=()=>{ if(!checked){ selected=i; renderQuestion(); el.btnCheck.disabled=false; } };
+          el.optList.appendChild(div);
+        });
+
+        el.btnCheck.disabled=(selected==null)||checked;
+        el.btnNext.disabled=!checked;
+      }
+
+      el.btnCheck.addEventListener('click',()=>{
+        const q=VIEW[idx]; if(!q||selected==null||checked) return;
+        checked=true;
+        const ok=(selected===q.correctIndex);
+        if(!ok) WRONG.push(q.id);
+        saveScore(1,ok?1:0);
+
+        el.resultTitle.textContent= ok ? 'Goed! ✅' : 'Fout ❌';
+        el.resultDetail.textContent= `Juiste antwoord: ${LETTERS[q.correctIndex]}. ${q.options[q.correctIndex]}`;
+        el.resultBar.classList.add('show');
+
+        if(q.explanation || q.source){
+          el.btnExplain.style.display='inline-block';
+          el.btnExplain.onclick=()=>{
+            document.getElementById('expBody').innerHTML = esc(q.explanation||'') + (q.source?`<br><br><strong>Bron:</strong> ${esc(q.source)}`:'');
+            document.getElementById('explainModal').classList.add('open');
+          };
+        }
+
+        renderQuestion(); renderStats();
+        el.btnPracticeWrong.disabled = WRONG.length===0;
+      });
+
+      el.btnNext.addEventListener('click',()=>{ if(!checked) return; if(idx+1<VIEW.length){ idx++; selected=NULL; checked=false; renderQuestion(); renderStats(); } });
+      // fix: NULL -> null
+      const NULL=null;
+
+      el.btnPracticeWrong.addEventListener('click',()=>{
+        const set=new Set(WRONG); VIEW=ALL.filter(q=>set.has(q.id));
+        idx=0; selected=null; checked=false; WRONG=[];
+        renderQuestion(); renderStats(); el.btnPracticeWrong.disabled=true;
+        const s=loadScore(); el.statLine.textContent=`Vragen: ${ALL.length} • Fouten: ${VIEW.length} • Score: ${s.c}/${s.a}`;
+      });
+
+      el.btnExportWrong.addEventListener('click',()=>{
+        const set=new Set(WRONG); const wrongQs=ALL.filter(q=>set.has(q.id));
+        const blob=new Blob([JSON.stringify(wrongQs,null,2)],{type:'application/json'});
+        const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='refconnect_fouten.json'; a.click(); URL.revokeObjectURL(a.href);
+      });
+
+      el.btnResetScore.addEventListener('click',()=>{ try{ localStorage.setItem('rc_ans','0'); localStorage.setItem('rc_cor','0'); }catch(e){} const s=loadScore(); el.statLine.textContent=`Vragen: ${ALL.length} • Score: ${s.c}/${s.a}`; });
+
+      el.search.addEventListener('input',()=>{ searchTerm=el.search.value.trim().toLowerCase(); buildView(); });
+      el.order.addEventListener('change',()=>{ orderMode=el.order.value; buildView(); });
+
+      el.fileJSON.addEventListener('change',async e=>{
+        const f=e.target.files[0]; if(!f) return;
+        try{ const text=await f.text(); const data=JSON.parse(text); const norm=normalize(Array.isArray(data)?data:[]); if(!norm.length) throw new Error('JSON bevatte geen geldige vragen.'); setQuestions(norm,'JSON-bestand geladen'); }
+        catch(err){ showErr(err.message||String(err)); }
+        e.target.value='';
+      });
+
+      el.btnPaste.addEventListener('click',()=>el.modal.classList.add('open'));
+      el.btnCloseModal.addEventListener('click',()=>el.modal.classList.remove('open'));
+      el.btnLoadPasted.addEventListener('click',()=>{
+        try{ const data=JSON.parse(el.pasteArea.value); const norm=normalize(Array.isArray(data)?data:[]); if(!norm.length) throw new Error('JSON bevatte geen geldige vragen.'); setQuestions(norm,'JSON geplakt en geladen'); el.modal.classList.remove('open'); el.pasteArea.value=''; }
+        catch(err){ showErr(err.message||String(err)); }
+      });
+
+      setQuestions(SAMPLE,'Voorbeeldvragen geladen');
+    })();
+
+    /* ---------- VELDINSPECTIE ---------- */
+    (function(){
+      const t={nl:{"intro-tag":"Veldcontrole","intro-title":"Controleer het veld voor je fluit","intro-text":"Loop alle onderdelen na. Alles op groen? Dan is het veld (waarschijnlijk) bespeelbaar.","result-tag":"Resultaat","result-title":"Speelbaarheid","rules-title":"Tips voor scheidsrechters","tip-1":"Veiligheid gaat vóór afmaken van de wedstrijd.","tip-2":"Als het tijdens de 2e helft slechter wordt, mag je staken.","tip-3":"Noteer minuut, stand en reden.","sec-weather":"1. Weer & zicht","sec-pitch":"2. Veld / ondergrond","sec-goals":"3. Doelen & materiaal","sec-lines":"4. Lijnen & markering","sec-safety":"5. Veiligheid & omgeving","sec-extra":"6. Overig","q-rain":"Hevige regen / plassen op het veld?","q-storm":"Onweer / bliksem in de buurt?","q-visibility":"Zicht is voldoende?","q-surface":"Ondergrond niet té drassig / bevroren?","q-ballroll":"Bal kan normaal rollen/stuiten?","q-holes":"Geen gaten / gevaarlijke plekken?","q-goal-fixed":"Doelen staan vast (niet omvallend)?","q-nets":"Netten in orde?","q-corners":"Cornervlaggen aanwezig?","q-lines":"Lijnen volledig zichtbaar?","q-bench":"Technische zone / dug-out veilig?","q-crowd":"Publiek niet te dicht op veld?","q-refroom":"Kleedruimte scheidsrechter beschikbaar?","playable":"Veld speelbaar ✅","not-playable":"Veld niet speelbaar ❌","borderline":"Twijfelgeval – overleg met officials/consul"},
+      en:{"intro-tag":"Field check","intro-title":"Inspect the pitch before you whistle","intro-text":"Go through each section. All green? Then the pitch is (most likely) playable.","result-tag":"Result","result-title":"Playability","rules-title":"Referee tips","tip-1":"Safety comes before finishing the match.","tip-2":"If conditions worsen, you may abandon.","tip-3":"Note minute, score and reason.","sec-weather":"1. Weather & visibility","sec-pitch":"2. Pitch / surface","sec-goals":"3. Goals & equipment","sec-lines":"4. Lines & markings","sec-safety":"5. Safety & surroundings","sec-extra":"6. Other","q-rain":"Heavy rain / standing water?","q-storm":"Thunder / lightning nearby?","q-visibility":"Visibility OK?","q-surface":"Surface not too muddy / frozen?","q-ballroll":"Ball can roll / bounce normally?","q-holes":"No holes / dangerous spots?","q-goal-fixed":"Goals are fixed / secured?","q-nets":"Nets OK?","q-corners":"Corner flags present?","q-lines":"Field lines clearly visible?","q-bench":"Technical area / dugout safe?","q-crowd":"Spectators not too close?","q-refroom":"Referee dressing room available?","playable":"Pitch playable ✅","not-playable":"Pitch NOT playable ❌","borderline":"Borderline – consult officials/consul"}};
+      const items=[{key:"weather",titleKey:"sec-weather",questions:[{id:"rain",titleKey:"q-rain",weight:9,critical:true},{id:"storm",titleKey:"q-storm",weight:15,critical:true},{id:"visibility",titleKey:"q-visibility",weight:6,critical:false}]},{key:"pitch",titleKey:"sec-pitch",questions:[{id:"surface",titleKey:"q-surface",weight:12,critical:true},{id:"ballroll",titleKey:"q-ballroll",weight:9,critical:false},{id:"holes",titleKey:"q-holes",weight:7,critical:false}]},{key:"goals",titleKey:"sec-goals",questions:[{id:"goal-fixed",titleKey:"q-goal-fixed",weight:12,critical:true},{id:"nets",titleKey:"q-nets",weight:4,critical:false},{id:"corners",titleKey:"q-corners",weight:3,critical:false}]},{key:"lines",titleKey:"sec-lines",questions:[{id:"lines",titleKey:"q-lines",weight:6,critical:false}]},{key:"safety",titleKey:"sec-safety",questions:[{id:"bench",titleKey:"q-bench",weight:5,critical:false},{id:"crowd",titleKey:"q-crowd",weight:5,critical:false}]},{key:"extra",titleKey:"sec-extra",questions:[{id:"refroom",titleKey:"q-refroom",weight:2,critical:false}]}];
+      let lang='nl'; const $=(s,r=document)=>r.querySelector(s), wrap=$('#sections');
+      function tt(k){ const d=t[lang]||t.nl; return d[k]||k; }
+      function renderText(){ $('#f-intro-tag').textContent=tt('intro-tag'); $('#f-intro-title').textContent=tt('intro-title'); $('#f-intro-text').textContent=tt('intro-text'); $('#f-result-tag').textContent=tt('result-tag'); $('#f-result-title').textContent=tt('result-title'); $('#f-rules-title').textContent=tt('rules-title'); $('#tip-1').textContent=tt('tip-1'); $('#tip-2').textContent=tt('tip-2'); $('#tip-3').textContent=tt('tip-3'); }
+      function renderForm(){
+        wrap.innerHTML='';
+        items.forEach(section=>{
+          const sec=document.createElement('div'); sec.className='section';
+          sec.innerHTML=`<div class="section-head" data-section="${section.key}"><span>${tt(section.titleKey)}</span><span>▼</span></div>
+          <div class="section-body">${section.questions.map(q=>`
+            <div class="qrow"><div>${tt(q.titleKey)}</div>
+              <select class="select" data-q="${q.id}">
+                <option value="">--</option>
+                <option value="ok">${lang==='nl'?'Ok / in orde':'OK / good'}</option>
+                <option value="minor">${lang==='nl'?'Kleine beperking':'Minor issue'}</option>
+                <option value="bad">${lang==='nl'?'Slecht / onveilig':'Bad / unsafe'}</option>
+                <option value="na">${lang==='nl'?'Niet van toepassing':'Not applicable'}</option>
+              </select></div>`).join('')}
+          </div>`; wrap.appendChild(sec);
+        });
+        Array.from(wrap.querySelectorAll('.section-head')).forEach(h=>h.addEventListener('click',()=>{ const b=h.nextElementSibling; b.style.display=(b.style.display==='none'?'grid':'none'); }));
+        Array.from(wrap.querySelectorAll('select')).forEach(sel=>sel.addEventListener('change',calc));
+        calc();
+      }
+      function calc(){
+        const fill=$('#f-progress-fill'), lab=$('#f-progress-label'), sc=$('#f-progress-score'), box=$('#status-box'), title=$('#status-title'), desc=$('#status-desc');
+        let total=0,filled=0,score=0,crit=false;
+        items.forEach(sec=>sec.questions.forEach(q=>{
+          total+=q.weight; const sel=wrap.querySelector(`select[data-q="${q.id}"]`);
+          if(!sel) return; const v=sel.value; if(v!=='') filled+=q.weight;
+          let local=0; if(v==='ok') local=q.weight; else if(v==='minor') local=q.weight*.6; else if(v==='bad'){ local=0; if(q.critical) crit=true; } else if(v==='na') local=q.weight; score+=local;
+        }));
+        const p=Math.round((filled/total)*100)||0, s=Math.round((score/total)*100)||0;
+        fill.style.width=p+'%'; lab.textContent=(lang==='nl'?`${p}% voltooid`:`${p}% completed`); sc.textContent=`Score: ${s} / 100`;
+        if(p<100){ box.style.borderColor='#fde68a'; box.style.background='#fffbeb'; title.textContent=(lang==='nl'?'Nog niet compleet':'Not complete yet'); desc.textContent=(lang==='nl'?'Vul alle onderdelen in om een betrouwbaar veldadvies te krijgen.':'Fill all sections to get a reliable advice.'); return; }
+        if(crit){ box.style.borderColor='#fecaca'; box.style.background='#fff1f2'; title.textContent=tt('not-playable'); desc.textContent=(lang==='nl'?'Reden: één of meer kritieke punten zijn onveilig.':'Reason: one or more critical items are unsafe.'); return; }
+        if(s>=85){ box.style.borderColor='#bbf7d0'; box.style.background='#f0fdf4'; title.textContent=tt('playable'); desc.textContent=(lang==='nl'?'Veld is overwegend in orde.':'Pitch looks fine. Keep monitoring the weather.'); }
+        else if(s>=65){ box.style.borderColor='#fde68a'; box.style.background='#fffbeb'; title.textContent=tt('borderline'); desc.textContent=(lang==='nl'?'Overleg met aanvoerders/consul.':'Consult teams/consul.'); }
+        else { box.style.borderColor='#fecaca'; box.style.background='#fff1f2'; title.textContent=tt('not-playable'); desc.textContent=(lang==='nl'?'Te veel onderdelen scoren laag. Veiligheid eerst.':'Too many low scores. Safety first.'); }
+      }
+      document.getElementById('langNL').addEventListener('click',()=>{ lang='nl'; renderText(); renderForm(); });
+      document.getElementById('langEN').addEventListener('click',()=>{ lang='en'; renderText(); renderForm(); });
+      renderText(); renderForm();
+    })();
+  </script>
+</body>
+</html>
